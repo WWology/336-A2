@@ -1,0 +1,7 @@
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vShader.vert
+	${CMAKE_CURRENT_BINARY_DIR} COPYONLY
+)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fShader.frag
+	${CMAKE_CURRENT_BINARY_DIR} COPYONLY
+)
