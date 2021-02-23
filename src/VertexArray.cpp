@@ -25,4 +25,5 @@ void VertexArray::addBuffer(const VertexBuffer& t_Vb, const Layout& t_Layout)
 	Bind();
 	t_Vb.Bind();
 	glVertexAttribPointer(t_Layout.index, 3, GL_FLOAT, GL_FALSE, t_Layout.stride, t_Layout.offset);
+	glEnableVertexAttribArray(t_Layout.index);
 }

@@ -12,6 +12,7 @@
 #include "Callbacks.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
+#include "VertexArray.h"
 #include "VertexBuffer.h"
 
 // Constant Variable
@@ -45,32 +46,17 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-GLuint vao = 0;
-
-static void init(GLuint shaderID, GLuint vboID, GLuint iboID)
+static void init(GLuint iboID)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	GLuint colourIdx = glGetAttribLocation(shaderID, "aColour");
-	GLuint positionIdx = glGetAttribLocation(shaderID, "aPosition");
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vboID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboID);
-
-	glVertexAttribPointer(positionIdx, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, positions)));
-	glVertexAttribPointer(colourIdx, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colours)));
-
-	glEnableVertexAttribArray(positionIdx);
-	glEnableVertexAttribArray(colourIdx);
 }
 
 static void render_scene()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	glFlush();
@@ -124,9 +110,19 @@ int main()
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+	GLuint colourIdx = glGetAttribLocation(shader.getID(), "aColour");
+	GLuint positionIdx = glGetAttribLocation(shader.getID(), "aPosition");
+
 	VertexBuffer vbo(vertices, sizeof(vertices));
 	IndexBuffer ibo(indices, sizeof(indices));
-	init(shader.getID(), vbo.getID(), ibo.getID());
+	ibo.Bind();
+
+	VertexArray vao;
+	vao.Bind();
+	vao.addBuffer(vbo, {positionIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, positions))});
+	vao.addBuffer(vbo, {colourIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colours))});
+
+	init(ibo.getID());
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -134,8 +130,6 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteVertexArrays(1, &vao);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
