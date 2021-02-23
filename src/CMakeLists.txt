@@ -4,6 +4,7 @@ add_executable(${PROJECT_NAME}
 	Shader.cpp
 	IndexBuffer.cpp
 	VertexBuffer.cpp
+	VertexArray.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC

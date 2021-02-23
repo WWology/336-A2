@@ -45,9 +45,7 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-// GLuint vbo = 0;
 GLuint vao = 0;
-// GLuint ibo = 0;
 
 static void init(GLuint shaderID, GLuint vboID, GLuint iboID)
 {
