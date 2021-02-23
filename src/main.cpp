@@ -10,7 +10,9 @@
 
 // My Own Files
 #include "Callbacks.h"
+#include "IndexBuffer.h"
 #include "Shader.h"
+#include "VertexBuffer.h"
 
 // Constant Variable
 static const uint32_t WINDOW_WIDTH = 800;
@@ -43,29 +45,21 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-GLuint vbo = 0;
+// GLuint vbo = 0;
 GLuint vao = 0;
-GLuint ibo = 0;
+// GLuint ibo = 0;
 
-static void init(GLuint shaderID)
+static void init(GLuint shaderID, GLuint vboID, GLuint iboID)
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	GLuint colourIdx = glGetAttribLocation(shaderID, "aColour");
 	GLuint positionIdx = glGetAttribLocation(shaderID, "aPosition");
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
-
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+	glBindBuffer(GL_ARRAY_BUFFER, vboID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboID);
 
 	glVertexAttribPointer(positionIdx, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, positions)));
 	glVertexAttribPointer(colourIdx, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colours)));
@@ -129,7 +123,12 @@ int main()
 
 	Shader shader("../res/shaders/vShader.vert", "../res/shaders/fShader.frag");
 	shader.Bind();
-	init(shader.getID());
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	VertexBuffer vbo(vertices, sizeof(vertices));
+	IndexBuffer ibo(indices, sizeof(indices));
+	init(shader.getID(), vbo.getID(), ibo.getID());
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -138,8 +137,6 @@ int main()
 		glfwPollEvents();
 	}
 
-	glDeleteBuffers(1, &ibo);
-	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
 
 	glfwDestroyWindow(window);

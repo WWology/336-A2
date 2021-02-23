@@ -7,7 +7,7 @@ private:
 	GLuint m_BufferID;
 
 public:
-	IndexBuffer(const GLvoid* data);
+	IndexBuffer(const GLvoid* t_Data, GLuint t_Count);
 	~IndexBuffer();
 
 	GLuint getID() const { return m_BufferID; }

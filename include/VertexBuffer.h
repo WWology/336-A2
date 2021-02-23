@@ -7,7 +7,7 @@ private:
 	GLuint m_BufferID;
 
 public:
-	VertexBuffer(const GLvoid* data);
+	VertexBuffer(const GLvoid* t_Data, GLuint t_Size);
 	~VertexBuffer();
 
 	GLuint getID() const { return m_BufferID; }

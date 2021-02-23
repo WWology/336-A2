@@ -29,6 +29,23 @@ void Shader::Unbind() const
 	glUseProgram(0);
 }
 
+GLuint Shader::getUniformLocation(const std::string& t_Uname)
+{
+	if (m_UniformLocationCache.find(t_Uname) != m_UniformLocationCache.end())
+	{
+		return m_UniformLocationCache[t_Uname];
+	}
+
+	GLint u_LocationIdx = glGetUniformLocation(m_ProgramID, t_Uname.c_str());
+	if (u_LocationIdx != -1)
+	{
+		std::cout << "Warning: Uniform " << t_Uname << " doesn't exist!" << std::endl;
+	}
+
+	m_UniformLocationCache[t_Uname] = u_LocationIdx;
+	return u_LocationIdx;
+}
+
 void Shader::loadShadersFromFile(const std::string& t_VsFilename, const std::string& t_FsFilename)
 {
 	std::ifstream vsFile(t_VsFilename, std::ios::in); // open file stream

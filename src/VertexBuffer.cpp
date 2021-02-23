@@ -4,11 +4,11 @@
 
 #include "VertexBuffer.h"
 
-VertexBuffer::VertexBuffer(const GLvoid* data)
+VertexBuffer::VertexBuffer(const GLvoid* t_Data, GLuint t_Size)
 {
 	glGenBuffers(1, &m_BufferID);
 	glBindBuffer(GL_ARRAY_BUFFER, m_BufferID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, t_Size, t_Data, GL_STATIC_DRAW);
 }
 
 VertexBuffer::~VertexBuffer()
