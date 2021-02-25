@@ -20,6 +20,15 @@
 #include "VertexBuffer.h"
 #include "Window.h"
 
+struct Light
+{
+	glm::vec3 position = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 direction = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 ambient = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
+};
+
 struct FrameData
 {
 	double lastUpdateTime = glfwGetTime();
@@ -28,6 +37,16 @@ struct FrameData
 	int frameCount = 0;
 	int FPS = 0;
 };
+
+struct GUI
+{
+	FrameData frame;
+	bool animation;
+	glm::vec3 lightPos;
+	float yaw = 0;
+	float pitch = 0;
+};
+
 struct Vertex
 {
 	GLfloat positions[3];
@@ -56,7 +75,7 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-static void InitTweakBar(const Window& t_Window, int& FPS, double& frameTime)
+static void InitTweakBar(const Window& t_Window, GUI& t_GUI)
 {
 	TwBar* TweakBar;
 
@@ -68,35 +87,44 @@ static void InitTweakBar(const Window& t_Window, int& FPS, double& frameTime)
 	TweakBar = TwNewBar("Main");
 	TwDefine(" Main Label ='Controls' refresh=0.02 text=light size='220 250' ");
 
-	TwAddVarRO(TweakBar, "FPS", TW_TYPE_INT32, &FPS, " group='Frame' ");
-	TwAddVarRO(TweakBar, "Frame Time", TW_TYPE_DOUBLE, &frameTime, " group='Frame' precision=4 ");
+	TwAddVarRO(TweakBar, "FPS", TW_TYPE_INT32, &t_GUI.frame.FPS, " group='Frame' ");
+	TwAddVarRO(TweakBar, "Frame Time", TW_TYPE_DOUBLE, &t_GUI.frame.frameTime, " group='Frame' precision=4 ");
+
+	TwAddVarRW(TweakBar, "Toggle", TW_TYPE_BOOLCPP, &t_GUI.animation, " group='Animation'");
+
+	TwAddVarRW(TweakBar, "Position x", TW_TYPE_FLOAT, &t_GUI.lightPos[0], " group='Light' min=-10.0 max=10.0 step=0.1");
+	TwAddVarRW(TweakBar, "Position y", TW_TYPE_FLOAT, &t_GUI.lightPos[1], " group='Light' min=-10.0 max=10.0 step=0.1");
+	TwAddVarRW(TweakBar, "Position z", TW_TYPE_FLOAT, &t_GUI.lightPos[2], " group='Light' min=0.0 max=10.0 step=0.1");
+
+	TwAddVarRW(TweakBar, "Yaw", TW_TYPE_FLOAT, &t_GUI.yaw, " group='Camera' min=0.0 max=10.0 step=0.1");
+	TwAddVarRW(TweakBar, "Pitch", TW_TYPE_FLOAT, &t_GUI.pitch, " group='Camera' min=0.0 max=10.0 step=0.1");
 }
 
-static void drawGUI(FrameData& t_Frame)
+static void drawGUI(GUI& t_GUI)
 {
 	TwDraw();
 
-	t_Frame.frameCount++;
-	t_Frame.elapsedTime = glfwGetTime() - t_Frame.lastUpdateTime;
+	t_GUI.frame.frameCount++;
+	t_GUI.frame.elapsedTime = glfwGetTime() - t_GUI.frame.lastUpdateTime;
 
-	if (t_Frame.elapsedTime >= 1.0f)
+	if (t_GUI.frame.elapsedTime >= 1.0f)
 	{
-		t_Frame.frameTime = 1.0f / t_Frame.frameCount;
+		t_GUI.frame.frameTime = 1.0f / t_GUI.frame.frameCount;
 
-		std::string str = "FPS = " + std::to_string(t_Frame.frameCount) + "; FT = " + std::to_string(t_Frame.frameTime);
-
-		t_Frame.FPS = t_Frame.frameCount;
-		t_Frame.frameCount = 0;
-		t_Frame.lastUpdateTime += t_Frame.elapsedTime;
+		t_GUI.frame.FPS = t_GUI.frame.frameCount;
+		t_GUI.frame.frameCount = 0;
+		t_GUI.frame.lastUpdateTime += t_GUI.frame.elapsedTime;
 	}
 }
 
 int main()
 {
-	FrameData frame;
+	GUI gui;
+	Light light;
+	gui.lightPos = light.position;
 
 	Window window(1000, 800);
-	InitTweakBar(window, frame.FPS, frame.frameTime);
+	InitTweakBar(window, gui);
 
 	Shader shader("res/shaders/vShader.vert", "res/shaders/fShader.frag");
 	shader.Bind();
@@ -126,9 +154,11 @@ int main()
 
 		renderer.Draw(vao, ibo, shader);
 
-		drawGUI(frame);
+		drawGUI(gui);
 
 		glfwSwapBuffers(window.getWindow());
 		glfwPollEvents();
 	}
+
+	TwTerminate();
 }

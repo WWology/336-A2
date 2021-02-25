@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <AntTweakBar.h>
+
 #include "Callbacks.h"
 
 /**
@@ -53,4 +55,30 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void error_callback(int error, const char* description)
 {
 	std::cerr << description << std::endl;
+}
+
+/**
+ * @brief For modifying AntTweakBar GUI
+ *
+ * @param window The window where the gui is to be modified
+ * @param xpos x position of the cursor in the window
+ * @param ypos y position of the cursor in the window
+ */
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	// pass mouse data to tweak bar
+	TwEventMousePosGLFW(xpos, ypos);
+}
+
+/**
+ * @brief For modifying AntTweakBar GUI
+ *
+ * @param window The window where the gui is to be modified
+ * @param button The button pressed on the mouse
+ * @param action The action performed on the button
+ */
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	// pass mouse data to tweak bar
+	TwEventMouseButtonGLFW(button, action);
 }

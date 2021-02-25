@@ -36,9 +36,6 @@ private:
 	{
 		GLFWwindow* window;
 
-		uint32_t WINDOW_WIDTH = 800;
-		uint32_t WINDOW_HEIGHT = 800;
-
 		glfwSetErrorCallback(error_callback);
 
 		if (!glfwInit())
@@ -52,7 +49,7 @@ private:
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-		window = glfwCreateWindow(m_Width, m_Height, "5281568_YosuaMartiansia_A2", nullptr, nullptr);
+		window = glfwCreateWindow(m_Width, m_Height, "Assignment 2", nullptr, nullptr);
 
 		if (window == NULL)
 		{
@@ -71,6 +68,8 @@ private:
 		}
 
 		glfwSetKeyCallback(window, key_callback);
+		glfwSetCursorPosCallback(window, cursor_position_callback);
+		glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 		// For Debugging Purposes
 		glEnable(GL_DEBUG_OUTPUT);
