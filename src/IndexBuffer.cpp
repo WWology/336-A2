@@ -5,6 +5,7 @@
 #include "IndexBuffer.h"
 
 IndexBuffer::IndexBuffer(const GLvoid* t_Data, GLuint t_Count)
+	: m_Count(t_Count)
 {
 	glGenBuffers(1, &m_BufferID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_BufferID);

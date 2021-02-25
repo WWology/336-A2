@@ -29,7 +29,7 @@ void Shader::Unbind() const
 	glUseProgram(0);
 }
 
-GLuint Shader::getUniformLocation(const std::string& t_Uname)
+GLint Shader::getUniformLocation(const std::string& t_Uname)
 {
 	if (m_UniformLocationCache.find(t_Uname) != m_UniformLocationCache.end())
 	{
@@ -44,6 +44,16 @@ GLuint Shader::getUniformLocation(const std::string& t_Uname)
 
 	m_UniformLocationCache[t_Uname] = u_LocationIdx;
 	return u_LocationIdx;
+}
+
+void Shader::setUniformMatrix4fv(const std::string& t_Uname, const GLfloat* t_Value)
+{
+	glUniformMatrix4fv(getUniformLocation(t_Uname), 1, GL_FALSE, t_Value);
+}
+
+void Shader::setUniform3fv(const std::string& t_Uname, const GLfloat* t_Value)
+{
+	glUniform3fv(getUniformLocation(t_Uname), 1, t_Value);
 }
 
 void Shader::loadShadersFromFile(const std::string& t_VsFilename, const std::string& t_FsFilename)

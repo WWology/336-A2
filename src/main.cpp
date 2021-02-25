@@ -7,17 +7,16 @@
 // OpenGL Libraries
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 
 // My Own Files
 #include "Callbacks.h"
 #include "IndexBuffer.h"
+#include "Renderer.h"
 #include "Shader.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
-
-// Constant Variable
-static const uint32_t WINDOW_WIDTH = 800;
-static const uint32_t WINDOW_HEIGHT = 800;
 
 struct Vertex
 {
@@ -25,6 +24,7 @@ struct Vertex
 	GLfloat colours[3];
 };
 
+// TODO Add texture
 Vertex vertices[] = {
 	// Triangle
 	// vertex 1
@@ -46,25 +46,12 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-static void init(GLuint iboID)
+GLFWwindow* initOpenGL()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	GLFWwindow* window;
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iboID);
-}
-
-static void render_scene()
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-	glFlush();
-}
-
-int main()
-{
-	GLFWwindow* window = nullptr;
+	uint32_t WINDOW_WIDTH = 800;
+	uint32_t WINDOW_HEIGHT = 800;
 
 	glfwSetErrorCallback(error_callback);
 
@@ -105,28 +92,41 @@ int main()
 	glDebugMessageCallback(debug_message_callback, nullptr);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
 
-	Shader shader("../res/shaders/vShader.vert", "../res/shaders/fShader.frag");
-	shader.Bind();
+	return window;
+}
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+int main()
+{
+	GLFWwindow* window = initOpenGL();
+
+	Shader shader("res/shaders/vShader.vert", "res/shaders/fShader.frag");
+	shader.Bind();
 
 	GLuint colourIdx = glGetAttribLocation(shader.getID(), "aColour");
 	GLuint positionIdx = glGetAttribLocation(shader.getID(), "aPosition");
+	shader.getUniformLocation("uModelMatrix");
+
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
 
 	VertexBuffer vbo(vertices, sizeof(vertices));
 	IndexBuffer ibo(indices, sizeof(indices));
-	ibo.Bind();
 
 	VertexArray vao;
 	vao.Bind();
 	vao.addBuffer(vbo, {positionIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, positions))});
 	vao.addBuffer(vbo, {colourIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colours))});
 
-	init(ibo.getID());
+	Renderer renderer;
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		render_scene();
+		renderer.Clear();
+		shader.setUniformMatrix4fv("uModelMatrix", &modelMatrix[0][0]);
+
+		renderer.Draw(vao, ibo, shader);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

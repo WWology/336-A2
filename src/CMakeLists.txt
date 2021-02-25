@@ -5,16 +5,18 @@ add_executable(${PROJECT_NAME}
 	IndexBuffer.cpp
 	VertexBuffer.cpp
 	VertexArray.cpp
+	Renderer.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
 	GraphicsSDK
 )
 
-pvs_studio_add_target(TARGET Tutorial2d.analyze ALL
+pvs_studio_add_target(TARGET ${PROJECT_NAME}.analyze ALL
 	OUTPUT FORMAT errorfile
 	ANALYZE ${PROJECT_NAME}
 	MODE GA:1,2 OP
-	LOG Tutorial2d.err
+	LOG ${PROJECT_NAME}.err
 	HIDE_HELP
+	ARGS -e ${CMAKE_SOURCE_DIR}/lib
 )
