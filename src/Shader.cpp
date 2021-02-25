@@ -43,7 +43,7 @@ GLint Shader::getUniformLocation(const std::string& t_Uname)
 	}
 
 	GLint u_LocationIdx = glGetUniformLocation(m_ProgramID, t_Uname.c_str());
-	if (u_LocationIdx != -1)
+	if (u_LocationIdx == -1)
 	{
 		std::cout << "Warning: Uniform " << t_Uname << " doesn't exist!" << std::endl;
 	}

@@ -5,6 +5,7 @@
 #include <iostream>
 
 // OpenGL Libraries
+#include <AntTweakBar.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -17,7 +18,16 @@
 #include "Shader.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
+#include "Window.h"
 
+struct FrameData
+{
+	double lastUpdateTime = glfwGetTime();
+	double elapsedTime = lastUpdateTime;
+	double frameTime = 0.0f;
+	int frameCount = 0;
+	int FPS = 0;
+};
 struct Vertex
 {
 	GLfloat positions[3];
@@ -46,58 +56,47 @@ GLuint indices[] = {
 	2, 1, 3	 // Triangle 2
 };
 
-GLFWwindow* initOpenGL()
+static void InitTweakBar(const Window& t_Window, int& FPS, double& frameTime)
 {
-	GLFWwindow* window;
+	TwBar* TweakBar;
 
-	uint32_t WINDOW_WIDTH = 800;
-	uint32_t WINDOW_HEIGHT = 800;
+	TwInit(TW_OPENGL_CORE, nullptr);
+	TwWindowSize(t_Window.getWidth(), t_Window.getHeight());
+	TwDefine(" TW_HELP visible=false "); // disable help menu
+	TwDefine(" GLOBAL fontsize=3 ");	 // set large font size
 
-	glfwSetErrorCallback(error_callback);
+	TweakBar = TwNewBar("Main");
+	TwDefine(" Main Label ='Controls' refresh=0.02 text=light size='220 250' ");
 
-	if (!glfwInit())
+	TwAddVarRO(TweakBar, "FPS", TW_TYPE_INT32, &FPS, " group='Frame' ");
+	TwAddVarRO(TweakBar, "Frame Time", TW_TYPE_DOUBLE, &frameTime, " group='Frame' precision=4 ");
+}
+
+static void drawGUI(FrameData& t_Frame)
+{
+	TwDraw();
+
+	t_Frame.frameCount++;
+	t_Frame.elapsedTime = glfwGetTime() - t_Frame.lastUpdateTime;
+
+	if (t_Frame.elapsedTime >= 1.0f)
 	{
-		std::cerr << "Failed to initialise GLFW" << std::endl;
-		exit(EXIT_FAILURE);
+		t_Frame.frameTime = 1.0f / t_Frame.frameCount;
+
+		std::string str = "FPS = " + std::to_string(t_Frame.frameCount) + "; FT = " + std::to_string(t_Frame.frameTime);
+
+		t_Frame.FPS = t_Frame.frameCount;
+		t_Frame.frameCount = 0;
+		t_Frame.lastUpdateTime += t_Frame.elapsedTime;
 	}
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "5281568_YosuaMartiansia_A2", nullptr, nullptr);
-
-	if (window == NULL)
-	{
-		std::cerr << "Failed to create a window" << std::endl;
-		glfwTerminate();
-		exit(EXIT_FAILURE);
-	}
-
-	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
-
-	if (glewInit() != GLEW_OK)
-	{
-		std::cerr << "Failed to initialise GLEW" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	glfwSetKeyCallback(window, key_callback);
-
-	// For Debugging Purposes
-	glEnable(GL_DEBUG_OUTPUT);
-	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(debug_message_callback, nullptr);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
-
-	return window;
 }
 
 int main()
 {
-	GLFWwindow* window = initOpenGL();
+	FrameData frame;
+
+	Window window(1000, 800);
+	InitTweakBar(window, frame.FPS, frame.frameTime);
 
 	Shader shader("res/shaders/vShader.vert", "res/shaders/fShader.frag");
 	shader.Bind();
@@ -120,17 +119,16 @@ int main()
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window.getWindow()))
 	{
 		renderer.Clear();
 		shader.setUniformMatrix4fv("uModelMatrix", &modelMatrix[0][0]);
 
 		renderer.Draw(vao, ibo, shader);
 
-		glfwSwapBuffers(window);
+		drawGUI(frame);
+
+		glfwSwapBuffers(window.getWindow());
 		glfwPollEvents();
 	}
-
-	glfwDestroyWindow(window);
-	glfwTerminate();
 }

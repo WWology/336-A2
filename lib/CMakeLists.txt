@@ -20,13 +20,6 @@ find_package(assimp REQUIRED)
 
 add_library(GraphicsSDK INTERFACE)
 
-include_directories(
-	${OPENGL_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR}
-	${assimp_INCLUDE_DIR}
-	AntTweakBar/include/
-)
-
 target_link_libraries(GraphicsSDK INTERFACE
 	OpenGL::GL
 	GLEW::glew_s
