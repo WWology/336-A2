@@ -24,6 +24,12 @@ void VertexArray::Unbind() const
 	glBindVertexArray(0);
 }
 
+/**
+ * @brief Add a Vertex Buffer Object
+ *
+ * @param t_Vb The Vertex Buffer Object to be added
+ * @param t_Layout Layout specification for the Vertex Buffer Data
+ */
 void VertexArray::addBuffer(const VertexBuffer& t_Vb, const Layout& t_Layout)
 {
 	Bind();

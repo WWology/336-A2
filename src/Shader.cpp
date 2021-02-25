@@ -29,6 +29,12 @@ void Shader::Unbind() const
 	glUseProgram(0);
 }
 
+/**
+ * @brief Get the location of the uniform in the shader program
+ *
+ * @param t_Uname The uniform name
+ * @return GLint The index of the uniform variable
+ */
 GLint Shader::getUniformLocation(const std::string& t_Uname)
 {
 	if (m_UniformLocationCache.find(t_Uname) != m_UniformLocationCache.end())
@@ -46,11 +52,23 @@ GLint Shader::getUniformLocation(const std::string& t_Uname)
 	return u_LocationIdx;
 }
 
+/**
+ * @brief Wrapper for glUniformMatrix4fv
+ *
+ * @param t_Uname Uniform name in shader
+ * @param t_Value Matrix to be set on the uniform
+ */
 void Shader::setUniformMatrix4fv(const std::string& t_Uname, const GLfloat* t_Value)
 {
 	glUniformMatrix4fv(getUniformLocation(t_Uname), 1, GL_FALSE, t_Value);
 }
 
+/**
+ * @brief Wrapper for glUniform3fv
+ *
+ * @param t_Uname Uniform Name in shader
+ * @param t_Value The value to be set on the uniform
+ */
 void Shader::setUniform3fv(const std::string& t_Uname, const GLfloat* t_Value)
 {
 	glUniform3fv(getUniformLocation(t_Uname), 1, t_Value);

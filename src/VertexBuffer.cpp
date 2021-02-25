@@ -4,6 +4,12 @@
 
 #include "VertexBuffer.h"
 
+/**
+ * @brief Construct a new Vertex Buffer object
+ *
+ * @param t_Data Data to be stored in the Vertex Buffer
+ * @param t_Size The Size of the Data in the vertex Buffer
+ */
 VertexBuffer::VertexBuffer(const GLvoid* t_Data, GLuint t_Size)
 {
 	glGenBuffers(1, &m_BufferID);
