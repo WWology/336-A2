@@ -8,6 +8,9 @@
 #include <AntTweakBar.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <assimp/cimport.h>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -23,7 +26,6 @@
 struct Light
 {
 	glm::vec3 position = glm::vec3(1.0f, 1.0f, 1.0f);
-	glm::vec3 direction = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 ambient = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -41,8 +43,8 @@ struct FrameData
 struct GUI
 {
 	FrameData frame;
-	bool animation;
-	glm::vec3 lightPos;
+	bool animation = true;
+	glm::vec3 lightPos = glm::vec3(1.0f, 1.0f, 1.0f);
 	float yaw = 0;
 	float pitch = 0;
 };
@@ -51,6 +53,15 @@ struct Vertex
 {
 	GLfloat positions[3];
 	GLfloat colours[3];
+	// GLfloat normals[3];
+};
+
+struct Mesh
+{
+	Vertex* pMeshVertices = nullptr;
+	GLuint numberOfVertices = 0;
+	// GLuint* pMeshIndices = nullptr;
+	// GLuint numberOfFaces;
 };
 
 // TODO Add texture
@@ -74,6 +85,70 @@ GLuint indices[] = {
 	0, 1, 2, // Triangle 1
 	2, 1, 3	 // Triangle 2
 };
+
+static bool load_mesh(const char* t_FileName, Mesh* t_Mesh)
+{
+	const aiScene* pScene = aiImportFile(t_FileName, aiProcess_Triangulate);
+
+	if (!pScene)
+	{
+		std::cerr << "Failed to load mesh" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	const aiMesh* pMesh = pScene->mMeshes[0];
+
+	t_Mesh->numberOfVertices = pMesh->mNumVertices;
+
+	if (pMesh->HasPositions())
+	{
+		t_Mesh->pMeshVertices = new Vertex[pMesh->mNumVertices];
+
+		for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
+		{
+			const aiVector3D* pVertexPos = &(pMesh->mVertices[i]);
+
+			t_Mesh->pMeshVertices[i].positions[0] = (GLfloat)pVertexPos->x;
+			t_Mesh->pMeshVertices[i].positions[1] = (GLfloat)pVertexPos->y;
+			t_Mesh->pMeshVertices[i].positions[2] = (GLfloat)pVertexPos->z;
+
+			t_Mesh->pMeshVertices[i].colours[0] = static_cast<double>(rand()) / RAND_MAX;
+			t_Mesh->pMeshVertices[i].colours[1] = static_cast<double>(rand()) / RAND_MAX;
+			t_Mesh->pMeshVertices[i].colours[2] = static_cast<double>(rand()) / RAND_MAX;
+		}
+	}
+
+	// if (pMesh->HasNormals())
+	// {
+	// 	for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
+	// 	{
+	// 		const aiVector3D* pVertexNormal = &(pMesh->mNormals[i]);
+
+	// 		t_Mesh->pMeshVertices[i].normals[0] = (GLfloat)pVertexNormal->x;
+	// 		t_Mesh->pMeshVertices[i].normals[1] = (GLfloat)pVertexNormal->y;
+	// 		t_Mesh->pMeshVertices[i].normals[2] = (GLfloat)pVertexNormal->z;
+	// 	}
+	// }
+
+	// if (pMesh->HasFaces())
+	// {
+	// 	t_Mesh->numberOfFaces = pMesh->mNumFaces;
+	// 	t_Mesh->pMeshIndices = new GLuint[pMesh->mNumFaces * 3];
+
+	// 	for (unsigned int i = 0; i < pMesh->mNumFaces; i++)
+	// 	{
+	// 		const aiFace* pFace = &(pMesh->mFaces[i]);
+
+	// 		t_Mesh->pMeshIndices[i * 3] = (GLuint)pFace->mIndices[0];
+	// 		t_Mesh->pMeshIndices[i * 3 + 1] = (GLuint)pFace->mIndices[1];
+	// 		t_Mesh->pMeshIndices[i * 3 + 2] = (GLuint)pFace->mIndices[2];
+	// 	}
+	// }
+
+	aiReleaseImport(pScene);
+
+	return true;
+}
 
 static void InitTweakBar(const Window& t_Window, GUI& t_GUI)
 {
@@ -121,10 +196,16 @@ int main()
 {
 	GUI gui;
 	Light light;
+	Mesh mesh;
 	gui.lightPos = light.position;
+
+	load_mesh("res/models/torus.obj", &mesh);
 
 	Window window(1000, 800);
 	InitTweakBar(window, gui);
+
+	glm::mat4 g_viewMatrix;
+	glm::mat4 g_projectionMatrix;
 
 	Shader shader("res/shaders/vShader.vert", "res/shaders/fShader.frag");
 	shader.Bind();
@@ -134,9 +215,14 @@ int main()
 	shader.getUniformLocation("uModelMatrix");
 
 	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	g_viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	int width, height;
+	glfwGetFramebufferSize(window.getWindow(), &width, &height);
+	float aspectRatio = static_cast<float>(width) / height;
+	g_projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 
-	VertexBuffer vbo(vertices, sizeof(vertices));
-	IndexBuffer ibo(indices, sizeof(indices));
+	VertexBuffer vbo(mesh.pMeshVertices, sizeof(Vertex) * mesh.numberOfVertices);
+	// IndexBuffer ibo(mesh.pMeshIndices, sizeof(GLuint) * 3 * mesh.numberOfFaces);
 
 	VertexArray vao;
 	vao.Bind();
@@ -150,9 +236,11 @@ int main()
 	while (!glfwWindowShouldClose(window.getWindow()))
 	{
 		renderer.Clear();
-		shader.setUniformMatrix4fv("uModelMatrix", &modelMatrix[0][0]);
+		glm::mat4 MVP = g_projectionMatrix * g_viewMatrix * modelMatrix;
 
-		renderer.Draw(vao, ibo, shader);
+		shader.setUniformMatrix4fv("uModelMatrix", &MVP[0][0]);
+
+		renderer.Draw(vao, shader);
 
 		drawGUI(gui);
 

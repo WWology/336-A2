@@ -4,6 +4,12 @@
 
 #include "Renderer.h"
 
+Renderer::Renderer()
+{
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_DEPTH_TEST);
+}
+
 /**
  * @brief Clear the colour buffer and depth buffer
  *
@@ -26,4 +32,11 @@ void Renderer::Draw(const VertexArray& t_Vao, const IndexBuffer& t_Ibo, const Sh
 	t_Vao.Bind();
 	t_Ibo.Bind();
 	glDrawElements(GL_TRIANGLES, t_Ibo.getCount(), GL_UNSIGNED_INT, nullptr);
+}
+
+void Renderer::Draw(const VertexArray& t_Vao, const Shader& t_Program) const
+{
+	t_Program.Bind();
+	t_Vao.Bind();
+	glDrawArrays(GL_TRIANGLES, 0, 3456);
 }
