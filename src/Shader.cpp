@@ -74,6 +74,17 @@ void Shader::setUniform3fv(const std::string& t_Uname, const GLfloat* t_Value)
 	glUniform3fv(getUniformLocation(t_Uname), 1, t_Value);
 }
 
+/**
+ * @brief Wrapper for glUniform1fv
+ *
+ * @param t_Uname Uniform Name in shader
+ * @param t_Value The value to be set on the uniform
+ */
+void Shader::setUniform1fv(const std::string& t_Uname, const GLfloat* t_Value)
+{
+	glUniform1fv(getUniformLocation(t_Uname), 1, t_Value);
+}
+
 void Shader::loadShadersFromFile(const std::string& t_VsFilename, const std::string& t_FsFilename)
 {
 	std::ifstream vsFile(t_VsFilename, std::ios::in); // open file stream

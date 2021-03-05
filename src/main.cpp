@@ -31,6 +31,14 @@ struct Light
 	glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
 };
 
+struct Material
+{
+	glm::vec3 ambient = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
+	float shininess = 0;
+};
+
 struct FrameData
 {
 	double lastUpdateTime = glfwGetTime();
@@ -52,103 +60,91 @@ struct GUI
 struct Vertex
 {
 	GLfloat positions[3];
-	GLfloat colours[3];
-	// GLfloat normals[3];
+	// GLfloat colours[3];
+	GLfloat normals[3];
 };
 
 struct Mesh
 {
 	Vertex* pMeshVertices = nullptr;
 	GLuint numberOfVertices = 0;
-	// GLuint* pMeshIndices = nullptr;
-	// GLuint numberOfFaces;
+	GLuint* pMeshIndices = nullptr;
+	GLuint numberOfFaces = 0;
+
+	Mesh(const char* t_FileName)
+	{
+		const aiScene* pScene = aiImportFile(t_FileName, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_JoinIdenticalVertices);
+
+		if (!pScene)
+		{
+			std::cerr << "Failed to load mesh" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+		const aiMesh* pMesh = pScene->mMeshes[0];
+
+		numberOfVertices = pMesh->mNumVertices;
+
+		if (pMesh->HasPositions())
+		{
+			pMeshVertices = new Vertex[pMesh->mNumVertices];
+
+			for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
+			{
+				const aiVector3D* pVertexPos = &(pMesh->mVertices[i]);
+
+				pMeshVertices[i].positions[0] = (GLfloat)pVertexPos->x;
+				pMeshVertices[i].positions[1] = (GLfloat)pVertexPos->y;
+				pMeshVertices[i].positions[2] = (GLfloat)pVertexPos->z;
+			}
+		}
+
+		if (pMesh->HasNormals())
+		{
+			for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
+			{
+				const aiVector3D* pVertexNormal = &(pMesh->mNormals[i]);
+
+				pMeshVertices[i].normals[0] = (GLfloat)pVertexNormal->x;
+				pMeshVertices[i].normals[1] = (GLfloat)pVertexNormal->y;
+				pMeshVertices[i].normals[2] = (GLfloat)pVertexNormal->z;
+			}
+		}
+
+		if (pMesh->HasFaces())
+		{
+			numberOfFaces = pMesh->mNumFaces;
+			pMeshIndices = new GLuint[pMesh->mNumFaces * 3];
+
+			for (unsigned int i = 0; i < pMesh->mNumFaces; i++)
+			{
+				const aiFace* pFace = &(pMesh->mFaces[i]);
+
+				pMeshIndices[i * 3] = (GLuint)pFace->mIndices[0];
+				pMeshIndices[i * 3 + 1] = (GLuint)pFace->mIndices[1];
+				pMeshIndices[i * 3 + 2] = (GLuint)pFace->mIndices[2];
+			}
+		}
+
+		aiReleaseImport(pScene);
+	}
 };
 
-// TODO Add texture
-Vertex vertices[] = {
-	// Triangle
+GLfloat viewport_Lines[] = {
 	// vertex 1
-	-0.5f, 0.5f, 0.0f, // position
-	1.0f, 0.0f, 0.0f,  // colour
+	0.0f, 600.0f, 0.0f, // position
 	//vertex 2
-	-0.5f, -0.5f, 0.0f, // position
-	1.0f, 0.5f, 0.0f,	// colour
+	1600.0f, 600.0f, 0.0f, // position
 	// vertex 3
-	0.5f, 0.5f, 0.0f, // position
-	1.0f, 0.0f, 0.5f, // colour
-	// Vertex 2
-	0.5f, -0.5f, 0.0f, // position
-	0.7f, 1.0f, 0.2f,  // colour
+	800.0f, 0.0f, 0.0f, // position
+	// Vertex 4
+	800.0f, 1200.0f, 0.0f, // position
 };
 
 GLuint indices[] = {
 	0, 1, 2, // Triangle 1
 	2, 1, 3	 // Triangle 2
 };
-
-static bool load_mesh(const char* t_FileName, Mesh* t_Mesh)
-{
-	const aiScene* pScene = aiImportFile(t_FileName, aiProcess_Triangulate);
-
-	if (!pScene)
-	{
-		std::cerr << "Failed to load mesh" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	const aiMesh* pMesh = pScene->mMeshes[0];
-
-	t_Mesh->numberOfVertices = pMesh->mNumVertices;
-
-	if (pMesh->HasPositions())
-	{
-		t_Mesh->pMeshVertices = new Vertex[pMesh->mNumVertices];
-
-		for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
-		{
-			const aiVector3D* pVertexPos = &(pMesh->mVertices[i]);
-
-			t_Mesh->pMeshVertices[i].positions[0] = (GLfloat)pVertexPos->x;
-			t_Mesh->pMeshVertices[i].positions[1] = (GLfloat)pVertexPos->y;
-			t_Mesh->pMeshVertices[i].positions[2] = (GLfloat)pVertexPos->z;
-
-			t_Mesh->pMeshVertices[i].colours[0] = static_cast<double>(rand()) / RAND_MAX;
-			t_Mesh->pMeshVertices[i].colours[1] = static_cast<double>(rand()) / RAND_MAX;
-			t_Mesh->pMeshVertices[i].colours[2] = static_cast<double>(rand()) / RAND_MAX;
-		}
-	}
-
-	// if (pMesh->HasNormals())
-	// {
-	// 	for (unsigned int i = 0; i < pMesh->mNumVertices; i++)
-	// 	{
-	// 		const aiVector3D* pVertexNormal = &(pMesh->mNormals[i]);
-
-	// 		t_Mesh->pMeshVertices[i].normals[0] = (GLfloat)pVertexNormal->x;
-	// 		t_Mesh->pMeshVertices[i].normals[1] = (GLfloat)pVertexNormal->y;
-	// 		t_Mesh->pMeshVertices[i].normals[2] = (GLfloat)pVertexNormal->z;
-	// 	}
-	// }
-
-	// if (pMesh->HasFaces())
-	// {
-	// 	t_Mesh->numberOfFaces = pMesh->mNumFaces;
-	// 	t_Mesh->pMeshIndices = new GLuint[pMesh->mNumFaces * 3];
-
-	// 	for (unsigned int i = 0; i < pMesh->mNumFaces; i++)
-	// 	{
-	// 		const aiFace* pFace = &(pMesh->mFaces[i]);
-
-	// 		t_Mesh->pMeshIndices[i * 3] = (GLuint)pFace->mIndices[0];
-	// 		t_Mesh->pMeshIndices[i * 3 + 1] = (GLuint)pFace->mIndices[1];
-	// 		t_Mesh->pMeshIndices[i * 3 + 2] = (GLuint)pFace->mIndices[2];
-	// 	}
-	// }
-
-	aiReleaseImport(pScene);
-
-	return true;
-}
 
 static void InitTweakBar(const Window& t_Window, GUI& t_GUI)
 {
@@ -196,38 +192,50 @@ int main()
 {
 	GUI gui;
 	Light light;
-	Mesh mesh;
+	Material material;
+	Mesh mesh("res/models/torus.obj");
 	gui.lightPos = light.position;
+	float zRotateAngle = 0.0f;
 
-	load_mesh("res/models/torus.obj", &mesh);
-
-	Window window(1000, 800);
+	Window window(1600, 1200);
 	InitTweakBar(window, gui);
 
-	glm::mat4 g_viewMatrix;
-	glm::mat4 g_projectionMatrix;
-
 	Shader shader("res/shaders/vShader.vert", "res/shaders/fShader.frag");
-	shader.Bind();
-
-	GLuint colourIdx = glGetAttribLocation(shader.getID(), "aColour");
 	GLuint positionIdx = glGetAttribLocation(shader.getID(), "aPosition");
-	shader.getUniformLocation("uModelMatrix");
+	GLuint normalIdx = glGetAttribLocation(shader.getID(), "aNormal");
 
-	glm::mat4 modelMatrix = glm::mat4(1.0f);
-	g_viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	int width, height;
 	glfwGetFramebufferSize(window.getWindow(), &width, &height);
 	float aspectRatio = static_cast<float>(width) / height;
-	g_projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+
+	glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+	glm::mat4 lineProjectionMatrix = glm::ortho(0.0f, 1600.0f, 0.0f, 1200.0f, 0.1f, 100.0f);
+
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	light.position = glm::vec3(10.0f, 10.0f, 10.0f);
+	light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	light.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+	light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	material.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
+	material.diffuse = glm::vec3(0.2f, 0.7f, 1.0f);
+	material.specular = glm::vec3(0.2f, 0.7f, 1.0f);
+	material.shininess = 10.0f;
 
 	VertexBuffer vbo(mesh.pMeshVertices, sizeof(Vertex) * mesh.numberOfVertices);
-	// IndexBuffer ibo(mesh.pMeshIndices, sizeof(GLuint) * 3 * mesh.numberOfFaces);
+	IndexBuffer ibo(mesh.pMeshIndices, 3 * mesh.numberOfFaces);
+
+	VertexBuffer vLines(&viewport_Lines, sizeof(viewport_Lines));
+	VertexArray lines;
+	lines.Bind();
+	lines.addBuffer(vLines, {positionIdx, sizeof(GLfloat), nullptr});
 
 	VertexArray vao;
 	vao.Bind();
 	vao.addBuffer(vbo, {positionIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, positions))});
-	vao.addBuffer(vbo, {colourIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, colours))});
+	vao.addBuffer(vbo, {normalIdx, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normals))});
 
 	Renderer renderer;
 
@@ -236,13 +244,47 @@ int main()
 	while (!glfwWindowShouldClose(window.getWindow()))
 	{
 		renderer.Clear();
-		glm::mat4 MVP = g_projectionMatrix * g_viewMatrix * modelMatrix;
+		modelMatrix = glm::rotate(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * glm::rotate(glm::radians(zRotateAngle), glm::vec3(0.0f, 0.0f, 1.0f)) * glm::scale(glm::vec3(1.0f, 1.0f, 1.0f));
 
-		shader.setUniformMatrix4fv("uModelMatrix", &MVP[0][0]);
+		glm::mat4 MVP = projectionMatrix * viewMatrix * modelMatrix;
+		glm::mat4 MV = viewMatrix * modelMatrix;
 
-		renderer.Draw(vao, shader);
+		shader.setUniformMatrix4fv("uMVPMatrix", &MVP[0][0]);
+		shader.setUniformMatrix4fv("uMVMatrix", &MV[0][0]);
+		shader.setUniformMatrix4fv("uVMatrix", &viewMatrix[0][0]);
 
+		shader.setUniform3fv("uLight.position", &light.position[0]);
+		shader.setUniform3fv("uLight.ambient", &light.ambient[0]);
+		shader.setUniform3fv("uLight.diffuse", &light.diffuse[0]);
+		shader.setUniform3fv("uLight.specular", &light.specular[0]);
+
+		shader.setUniform3fv("uMaterial.ambient", &material.ambient[0]);
+		shader.setUniform3fv("uMaterial.diffuse", &material.diffuse[0]);
+		shader.setUniform3fv("uMaterial.specular", &material.specular[0]);
+		shader.setUniform1fv("uMaterial.shininess", &material.shininess);
+
+		glViewport(0, 0, 800, 600);
 		drawGUI(gui);
+
+		glViewport(800, 600, 800, 600);
+		renderer.Draw(vao, ibo, shader);
+
+		glViewport(0, 0, 800, 600);
+		renderer.Draw(vao, ibo, shader);
+
+		glViewport(800, 0, 800, 600);
+		renderer.Draw(vao, ibo, shader);
+
+		if (gui.animation)
+		{
+			zRotateAngle += 0.5f;
+		}
+
+		MVP = lineProjectionMatrix * viewMatrix;
+		shader.setUniformMatrix4fv("uMVPMatrix", &MVP[0][0]);
+		lines.Bind();
+		glViewport(0, 0, 1600, 1200);
+		glDrawArrays(GL_LINES, 0, 4);
 
 		glfwSwapBuffers(window.getWindow());
 		glfwPollEvents();

@@ -20,6 +20,7 @@ public:
 	GLint getUniformLocation(const std::string& t_Uname);
 	void setUniformMatrix4fv(const std::string& t_Uname, const GLfloat* t_Value);
 	void setUniform3fv(const std::string& t_Uname, const GLfloat* t_Value);
+	void setUniform1fv(const std::string& t_Uname, const GLfloat* t_Value);
 
 private:
 	void
